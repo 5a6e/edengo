@@ -1,4 +1,4 @@
-package cache
+package localcache
 
 import (
 	"encoding/gob"
@@ -538,8 +538,6 @@ func (c *cache) IncrementFloat64(k string, n float64) (float64, error) {
 	c.mu.Unlock()
 	return nv, nil
 }
-
-
 
 // Decrement an item of type int, int8, int16, int32, int64, uintptr, uint,
 // uint8, uint32, or uint64, float32 or float64 by n. Returns an error if the
