@@ -170,6 +170,83 @@ func TestIncrementWithInt(t *testing.T) {
 	}
 }
 
+func TestTakeWithInt(t *testing.T) {
+	tc := New(DefaultExpiration, 0)
+	tc.Set("tint", 2, DefaultExpiration)
+
+	ok, err := tc.Take("tint", 1)
+	if err != nil {
+		t.Error("Error take:", err)
+	}
+	if !ok {
+		t.Error("Error take:", ok, err)
+	}
+
+	ok, err = tc.Take("tint", 1)
+	if err != nil {
+		t.Error("Error take:", err)
+	}
+	if !ok {
+		t.Error("Error take:", ok, err)
+	}
+
+	ok, err = tc.Take("tint", 1)
+	if err != nil {
+		t.Error("Error take:", err)
+	}
+	if ok {
+		t.Error("Error take:", err)
+	}
+
+	x, found := tc.Get("tint")
+	if !found {
+		t.Error("tint was not found")
+	}
+	if x.(int) != 0 {
+		t.Error("tint is not 0:", x)
+	}
+
+	ok, err = tc.Take("notexistkey", 1)
+	if err == nil {
+		t.Error("notexistkey was found")
+	}
+	if ok {
+		t.Error("take value of notexistkey:", ok)
+	}
+}
+
+func TestPutBackWithInt(t *testing.T) {
+	tc := New(DefaultExpiration, 0)
+	tc.Set("tint", 0, DefaultExpiration)
+	ok, err := tc.PutBack("tint", 1)
+	if err != nil {
+		t.Error("Error PutBack:", err)
+	}
+	if !ok {
+		t.Error("Error PutBack:", ok, err)
+	}
+	if v, ok := tc.Get("tint"); ok {
+		if v.(int) != 1 {
+			t.Error("Error PutBack:", v)
+		}
+	} else {
+		t.Error("Error PutBack: not found")
+	}
+
+	ok, _ = tc.PutBack("tint", 1)
+	if !ok {
+		t.Error("Error PutBack:", ok)
+	}
+	v, _ := tc.Get("tint")
+	if v.(int) != 2 {
+		t.Error("Error PutBack:", v)
+	}
+	_, err = tc.PutBack("notexistkey", 1)
+	if err == nil {
+		t.Error("notexistkey was found")
+	}
+}
+
 func TestIncrementWithInt8(t *testing.T) {
 	tc := New(DefaultExpiration, 0)
 	tc.Set("tint8", int8(1), DefaultExpiration)

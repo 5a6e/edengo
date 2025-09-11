@@ -542,7 +542,7 @@ func (c *cache) IncrementFloat64(k string, n float64) (float64, error) {
 
 // the value for key must be int32, int64, float32, float64
 // returns true if take n, false if not enough, error if not found or not number
-func (c *cache) Take(k string, n int64) (bool, error) {
+func (c *cache) Take(k string, n uint64) (bool, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	val, found := c.items[k]
@@ -552,10 +552,12 @@ func (c *cache) Take(k string, n int64) (bool, error) {
 
 	var x interface{}
 	switch val.Object.(type) {
+	case int:
+		x = val.Object.(int) - int(n)
 	case int32:
 		x = val.Object.(int32) - int32(n)
 	case int64:
-		x = val.Object.(int64) - n
+		x = val.Object.(int64) - int64(n)
 	case float32:
 		x = val.Object.(float32) - float32(n)
 	case float64:
@@ -567,7 +569,7 @@ func (c *cache) Take(k string, n int64) (bool, error) {
 	// check enough
 	var v = reflect.ValueOf(x)
 	switch v.Kind() {
-	case reflect.Int32, reflect.Int64:
+	case reflect.Int, reflect.Int32, reflect.Int64:
 		if v.Int() < 0 {
 			return false, nil
 		}
@@ -577,13 +579,13 @@ func (c *cache) Take(k string, n int64) (bool, error) {
 		}
 	}
 
-	val.Object = x
+	c.items[k] = Item{Object: x, Expiration: val.Expiration}
 	return true, nil
 }
 
 // the value for key must be int32, int64, float32, float64
 // returns true if take n, false if not enough, error if not found or not integer and float
-func (c *cache) PutBack(k string, n int64) (bool, error) {
+func (c *cache) PutBack(k string, n uint64) (bool, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	val, found := c.items[k]
@@ -598,7 +600,7 @@ func (c *cache) PutBack(k string, n int64) (bool, error) {
 	case int32:
 		x = val.Object.(int32) + int32(n)
 	case int64:
-		x = val.Object.(int64) + n
+		x = val.Object.(int64) + int64(n)
 	case float32:
 		x = val.Object.(float32) + float32(n)
 	case float64:
@@ -607,7 +609,7 @@ func (c *cache) PutBack(k string, n int64) (bool, error) {
 		return false, fmt.Errorf("the value %s for %s is not an (int, int32, int64, float32, float64)", val.Object, k)
 	}
 
-	val.Object = x
+	c.items[k] = Item{Object: x, Expiration: val.Expiration}
 	return true, nil
 }
 
